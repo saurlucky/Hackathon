@@ -1,0 +1,2026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChainVerse — Unified Web3 Protocol</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060810;
+  --bg2: #0b0f1a;
+  --bg3: #111827;
+  --panel: rgba(15,22,40,0.85);
+  --border: rgba(0,240,200,0.12);
+  --border-bright: rgba(0,240,200,0.4);
+  --cyan: #00f0c8;
+  --cyan2: #00c8f0;
+  --pink: #f0006e;
+  --gold: #f0b800;
+  --green: #00e87a;
+  --red: #ff4455;
+  --text: #e8f0ff;
+  --muted: #5a6a8a;
+  --card-glow: 0 0 30px rgba(0,240,200,0.06);
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-display);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── CANVAS BACKGROUND ── */
+#bgCanvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.5;
+}
+
+/* ── LAYOUT ── */
+.app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 72px;
+  background: rgba(6,8,16,0.95);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+  position: fixed;
+  top: 0; bottom: 0; left: 0;
+  z-index: 100;
+  backdrop-filter: blur(20px);
+}
+
+.logo-mark {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--cyan), var(--cyan2));
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800; color: var(--bg);
+  margin-bottom: 32px;
+  animation: pulse-logo 3s ease-in-out infinite;
+}
+
+@keyframes pulse-logo {
+  0%,100% { box-shadow: 0 0 0 0 rgba(0,240,200,0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(0,240,200,0); }
+}
+
+.nav-items { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+
+.nav-item {
+  width: 48px; height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  border: 1px solid transparent;
+  font-size: 20px;
+}
+
+.nav-item:hover, .nav-item.active {
+  background: rgba(0,240,200,0.1);
+  border-color: var(--border-bright);
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  width: 3px; height: 24px;
+  background: var(--cyan);
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+.nav-item .tooltip {
+  position: absolute;
+  left: 60px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  letter-spacing: 1px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  color: var(--cyan);
+}
+.nav-item:hover .tooltip { opacity: 1; }
+
+.sidebar-bottom {
+  display: flex; flex-direction: column; gap: 8px; align-items: center;
+}
+
+.wallet-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 8px var(--red);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.wallet-dot.connected { background: var(--green); box-shadow: 0 0 8px var(--green); }
+
+/* ── MAIN CONTENT ── */
+.main { margin-left: 72px; flex: 1; display: flex; flex-direction: column; }
+
+/* ── TOPBAR ── */
+.topbar {
+  height: 60px;
+  background: rgba(6,8,16,0.9);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  gap: 20px;
+  backdrop-filter: blur(20px);
+  position: sticky; top: 0; z-index: 50;
+}
+
+.brand {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(90deg, var(--cyan), var(--cyan2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-sub {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.topbar-center { flex: 1; display: flex; justify-content: center; gap: 32px; }
+
+.top-stat {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 1px;
+}
+.top-stat-val {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--cyan);
+}
+.top-stat-lbl {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.connect-btn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  padding: 8px 18px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.connect-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--cyan);
+  transform: translateX(-100%);
+  transition: transform 0.3s;
+  z-index: -1;
+}
+.connect-btn:hover::before { transform: translateX(0); }
+.connect-btn:hover { color: var(--bg); }
+.connect-btn.connected { border-color: var(--green); color: var(--green); }
+.connect-btn.connected:hover { color: var(--bg); }
+.connect-btn.connected::before { background: var(--green); }
+
+/* ── TABS ── */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  background: rgba(6,8,16,0.7);
+}
+
+.tab {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 14px 20px;
+  cursor: pointer;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  display: flex; align-items: center; gap: 8px;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+/* ── CONTENT AREA ── */
+.content { padding: 28px; flex: 1; }
+.page { display: none; }
+.page.active { display: block; animation: fadeUp 0.35s ease both; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── GRID LAYOUTS ── */
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
+.grid-main { display: grid; grid-template-columns: 1fr 340px; gap: 20px; }
+.grid-chart { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: var(--card-glow);
+  backdrop-filter: blur(10px);
+  transition: border-color 0.3s, box-shadow 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.card:hover { border-color: rgba(0,240,200,0.25); box-shadow: 0 0 40px rgba(0,240,200,0.08); }
+
+.card-glow-cyan::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(0,240,200,0.15), transparent);
+  border-radius: 50%;
+}
+
+.card-glow-pink::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(240,0,110,0.15), transparent);
+  border-radius: 50%;
+}
+
+.card-glow-gold::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(240,184,0,0.12), transparent);
+  border-radius: 50%;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── STAT CARDS ── */
+.stat-card { text-align: center; }
+.stat-value {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--cyan);
+  display: block;
+  margin: 4px 0;
+  text-shadow: 0 0 20px rgba(0,240,200,0.5);
+}
+.stat-value.pink { color: var(--pink); text-shadow: 0 0 20px rgba(240,0,110,0.4); }
+.stat-value.gold { color: var(--gold); text-shadow: 0 0 20px rgba(240,184,0,0.4); }
+.stat-value.green { color: var(--green); text-shadow: 0 0 20px rgba(0,232,122,0.4); }
+.stat-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+.stat-change { font-family: var(--font-mono); font-size: 10px; margin-top: 4px; }
+.stat-change.up { color: var(--green); }
+.stat-change.down { color: var(--red); }
+
+/* ── CHART CANVAS ── */
+.chart-wrap { position: relative; }
+canvas.chart { width: 100%; border-radius: 8px; }
+
+/* ── SECTION TITLE ── */
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-title .badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: rgba(0,240,200,0.1);
+  border: 1px solid var(--border-bright);
+  color: var(--cyan);
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+/* ── TABLE ── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.data-table td {
+  padding: 12px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  transition: background 0.15s;
+}
+.data-table tr:hover td { background: rgba(0,240,200,0.03); }
+.mono { font-family: var(--font-mono); font-size: 12px; }
+.tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.tag.active { background: rgba(0,232,122,0.15); color: var(--green); border: 1px solid rgba(0,232,122,0.3); }
+.tag.ended { background: rgba(90,106,138,0.15); color: var(--muted); border: 1px solid rgba(90,106,138,0.3); }
+.tag.passed { background: rgba(0,200,240,0.1); color: var(--cyan2); border: 1px solid rgba(0,200,240,0.3); }
+.tag.failed { background: rgba(255,68,85,0.1); color: var(--red); border: 1px solid rgba(255,68,85,0.3); }
+.tag.pending { background: rgba(240,184,0,0.1); color: var(--gold); border: 1px solid rgba(240,184,0,0.3); }
+.tag.rare { background: rgba(240,0,110,0.15); color: var(--pink); border: 1px solid rgba(240,0,110,0.3); }
+
+/* ── PROGRESS BAR ── */
+.progress-wrap { margin: 6px 0; }
+.progress-track {
+  height: 5px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s ease;
+}
+.progress-fill.cyan { background: linear-gradient(90deg, var(--cyan), var(--cyan2)); box-shadow: 0 0 8px var(--cyan); }
+.progress-fill.pink { background: linear-gradient(90deg, var(--pink), #ff00aa); box-shadow: 0 0 8px var(--pink); }
+.progress-fill.gold { background: linear-gradient(90deg, var(--gold), #ff9800); box-shadow: 0 0 8px var(--gold); }
+.progress-fill.green { background: linear-gradient(90deg, var(--green), #00ff99); box-shadow: 0 0 8px var(--green); }
+
+/* ── BUTTONS ── */
+.btn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 9px 18px;
+  border-radius: 7px;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.2s;
+}
+.btn-cyan { background: rgba(0,240,200,0.1); border-color: var(--cyan); color: var(--cyan); }
+.btn-cyan:hover { background: var(--cyan); color: var(--bg); box-shadow: 0 0 20px rgba(0,240,200,0.4); }
+.btn-pink { background: rgba(240,0,110,0.1); border-color: var(--pink); color: var(--pink); }
+.btn-pink:hover { background: var(--pink); color: #fff; box-shadow: 0 0 20px rgba(240,0,110,0.4); }
+.btn-gold { background: rgba(240,184,0,0.1); border-color: var(--gold); color: var(--gold); }
+.btn-gold:hover { background: var(--gold); color: var(--bg); box-shadow: 0 0 20px rgba(240,184,0,0.4); }
+.btn-ghost { background: transparent; border-color: var(--border); color: var(--muted); }
+.btn-ghost:hover { border-color: var(--text); color: var(--text); }
+.btn-sm { padding: 5px 12px; font-size: 9px; }
+.btn-full { width: 100%; text-align: center; }
+
+/* ── INPUT ── */
+.input-group { margin-bottom: 14px; }
+.input-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 6px; }
+.input-field {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input-field:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(0,240,200,0.1); }
+.input-field::placeholder { color: var(--muted); }
+select.input-field { cursor: pointer; }
+select.input-field option { background: var(--bg3); }
+
+/* ── NFT GRID ── */
+.nft-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.nft-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.nft-card:hover { border-color: var(--border-bright); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,240,200,0.1); }
+.nft-art {
+  width: 100%; height: 130px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 52px;
+  position: relative;
+  overflow: hidden;
+}
+.nft-info { padding: 12px; }
+.nft-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.nft-price { font-family: var(--font-mono); font-size: 11px; color: var(--cyan); }
+.nft-creator { font-family: var(--font-mono); font-size: 9px; color: var(--muted); }
+
+/* ── SUPPLY CHAIN ── */
+.chain-steps { display: flex; gap: 0; margin-bottom: 24px; overflow-x: auto; padding-bottom: 8px; }
+.chain-step {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+.chain-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 110px;
+}
+.chain-icon {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  border: 2px solid;
+  transition: all 0.3s;
+}
+.chain-icon.done { border-color: var(--green); background: rgba(0,232,122,0.1); box-shadow: 0 0 12px rgba(0,232,122,0.3); }
+.chain-icon.current { border-color: var(--cyan); background: rgba(0,240,200,0.1); box-shadow: 0 0 12px rgba(0,240,200,0.4); animation: pulse-node 2s infinite; }
+.chain-icon.pending { border-color: var(--muted); background: rgba(90,106,138,0.1); opacity: 0.5; }
+@keyframes pulse-node { 0%,100%{box-shadow:0 0 12px rgba(0,240,200,0.4)} 50%{box-shadow:0 0 24px rgba(0,240,200,0.8)} }
+.chain-label { font-family: var(--font-mono); font-size: 9px; text-align: center; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+.chain-connector {
+  width: 40px; height: 2px;
+  margin: 0 -2px;
+  margin-bottom: 24px;
+  position: relative;
+}
+.chain-connector.done { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.chain-connector.pending { background: var(--border); }
+
+/* ── AI PANEL ── */
+.ai-chat {
+  display: flex;
+  flex-direction: column;
+  height: 380px;
+}
+.ai-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.ai-msg {
+  display: flex;
+  gap: 10px;
+  animation: fadeUp 0.3s ease;
+}
+.ai-msg.user { flex-direction: row-reverse; }
+.ai-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; flex-shrink: 0;
+}
+.ai-avatar.bot { background: rgba(0,240,200,0.15); border: 1px solid var(--cyan); }
+.ai-avatar.user { background: rgba(240,0,110,0.15); border: 1px solid var(--pink); }
+.ai-bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.ai-msg.bot .ai-bubble { background: rgba(0,240,200,0.08); border: 1px solid rgba(0,240,200,0.15); }
+.ai-msg.user .ai-bubble { background: rgba(240,0,110,0.1); border: 1px solid rgba(240,0,110,0.2); text-align: right; }
+.ai-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+}
+.ai-input {
+  flex: 1;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  outline: none;
+}
+.ai-input:focus { border-color: var(--cyan); }
+.ai-send {
+  width: 36px; height: 36px;
+  background: rgba(0,240,200,0.1);
+  border: 1px solid var(--cyan);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--cyan);
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.ai-send:hover { background: var(--cyan); color: var(--bg); }
+
+/* ── VOTE BARS ── */
+.vote-row { margin-bottom: 12px; }
+.vote-meta { display: flex; justify-content: space-between; margin-bottom: 4px; font-family: var(--font-mono); font-size: 10px; }
+.vote-label { color: var(--text); }
+.vote-pct { color: var(--cyan); }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── LIVE PULSE ── */
+.live-dot {
+  display: inline-block;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  margin-right: 6px;
+  animation: blink 1.5s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+/* ── IDENTITY CARD ── */
+.id-card {
+  background: linear-gradient(135deg, rgba(0,240,200,0.08), rgba(0,200,240,0.05));
+  border: 1px solid var(--border-bright);
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.id-card::before {
+  content: 'VERIFIED';
+  position: absolute;
+  top: 20px; right: -30px;
+  background: rgba(0,232,122,0.2);
+  color: var(--green);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  padding: 4px 40px;
+  transform: rotate(45deg);
+  border: 1px solid rgba(0,232,122,0.3);
+}
+.id-avatar {
+  width: 64px; height: 64px;
+  background: linear-gradient(135deg, var(--cyan), var(--cyan2));
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  margin-bottom: 16px;
+  box-shadow: 0 0 20px rgba(0,240,200,0.3);
+}
+.id-name { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.id-addr { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+.id-creds { display: flex; flex-wrap: wrap; gap: 8px; }
+.credential {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(0,240,200,0.08);
+  border: 1px solid rgba(0,240,200,0.2);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--cyan);
+}
+.credential .check { color: var(--green); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 28px; right: 28px;
+  background: var(--bg3);
+  border: 1px solid var(--cyan);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  z-index: 999;
+  transform: translateY(80px);
+  opacity: 0;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 30px rgba(0,240,200,0.2);
+  max-width: 320px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1100px) {
+  .grid-4 { grid-template-columns: repeat(2,1fr); }
+  .grid-main { grid-template-columns: 1fr; }
+  .nft-grid { grid-template-columns: repeat(2,1fr); }
+}
+@media (max-width: 700px) {
+  .sidebar { width: 56px; }
+  .main { margin-left: 56px; }
+  .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+  .topbar-center { display: none; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="logo-mark">⬡</div>
+    <div class="nav-items">
+      <div class="nav-item active" onclick="showPage('overview')" id="nav-overview">
+        📊<span class="tooltip">Overview</span>
+      </div>
+      <div class="nav-item" onclick="showPage('defi')" id="nav-defi">
+        💰<span class="tooltip">DeFi</span>
+      </div>
+      <div class="nav-item" onclick="showPage('nft')" id="nav-nft">
+        🎨<span class="tooltip">NFT Market</span>
+      </div>
+      <div class="nav-item" onclick="showPage('dao')" id="nav-dao">
+        🗳️<span class="tooltip">DAO</span>
+      </div>
+      <div class="nav-item" onclick="showPage('supply')" id="nav-supply">
+        📦<span class="tooltip">Supply Chain</span>
+      </div>
+      <div class="nav-item" onclick="showPage('identity')" id="nav-identity">
+        🪪<span class="tooltip">Identity</span>
+      </div>
+      <div class="nav-item" onclick="showPage('ai')" id="nav-ai">
+        🤖<span class="tooltip">AI Assistant</span>
+      </div>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="wallet-dot" id="walletDot" onclick="connectWallet()"></div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div>
+        <div class="brand">ChainVerse</div>
+        <div class="brand-sub">Web3 Protocol v2.4</div>
+      </div>
+      <div class="topbar-center">
+        <div class="top-stat">
+          <span class="top-stat-val" id="tvlVal">$48.2M</span>
+          <span class="top-stat-lbl">Total TVL</span>
+        </div>
+        <div class="top-stat">
+          <span class="top-stat-val" id="ethPrice">$3,241</span>
+          <span class="top-stat-lbl">ETH Price</span>
+        </div>
+        <div class="top-stat">
+          <span class="top-stat-val">2,847</span>
+          <span class="top-stat-lbl">Active Users</span>
+        </div>
+        <div class="top-stat">
+          <span class="top-stat-val live"><span class="live-dot"></span>ETH</span>
+          <span class="top-stat-lbl">Network</span>
+        </div>
+      </div>
+      <button class="connect-btn" id="connectBtn" onclick="connectWallet()">Connect Wallet</button>
+    </header>
+
+    <!-- TABS -->
+    <div class="tab-bar">
+      <div class="tab active" onclick="showPage('overview')" id="tab-overview">📊 Overview</div>
+      <div class="tab" onclick="showPage('defi')" id="tab-defi">💰 DeFi</div>
+      <div class="tab" onclick="showPage('nft')" id="tab-nft">🎨 NFT</div>
+      <div class="tab" onclick="showPage('dao')" id="tab-dao">🗳️ DAO</div>
+      <div class="tab" onclick="showPage('supply')" id="tab-supply">📦 Supply</div>
+      <div class="tab" onclick="showPage('identity')" id="tab-identity">🪪 Identity</div>
+      <div class="tab" onclick="showPage('ai')" id="tab-ai">🤖 AI</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- ═══════════════════════════════════════════════
+           PAGE: OVERVIEW
+      ═══════════════════════════════════════════════ -->
+      <div class="page active" id="page-overview">
+        <div class="section-title">Protocol Overview <span class="badge">Live Dashboard</span></div>
+
+        <div class="grid-4">
+          <div class="card card-glow-cyan stat-card">
+            <div class="stat-label">Total Value Locked</div>
+            <span class="stat-value" id="tvlStat">$48.2M</span>
+            <div class="stat-change up">↑ +12.4% (24h)</div>
+          </div>
+          <div class="card card-glow-pink stat-card">
+            <div class="stat-label">NFTs Minted</div>
+            <span class="stat-value pink">14,829</span>
+            <div class="stat-change up">↑ +284 today</div>
+          </div>
+          <div class="card card-glow-gold stat-card">
+            <div class="stat-label">DAO Treasury</div>
+            <span class="stat-value gold">$2.1M</span>
+            <div class="stat-change up">↑ +5.8%</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">Supply Chain Items</div>
+            <span class="stat-value green">8,402</span>
+            <div class="stat-change up">↑ +142 verified</div>
+          </div>
+        </div>
+
+        <div class="grid-chart">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Protocol Volume — 30 Days</span>
+              <span class="tag active"><span class="live-dot"></span>Live</span>
+            </div>
+            <canvas id="volumeChart" height="200"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Module Distribution</span>
+            </div>
+            <canvas id="donutChart" height="200"></canvas>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Recent Transactions</span></div>
+            <table class="data-table">
+              <thead><tr><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
+              <tbody id="txTable"></tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Module Activity</span></div>
+            <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px">
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px">DeFi Lending</span><span class="mono" style="color:var(--cyan)">$18.4M</span></div>
+                <div class="progress-track"><div class="progress-fill cyan" style="width:78%"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px">NFT Volume</span><span class="mono" style="color:var(--pink)">$12.1M</span></div>
+                <div class="progress-track"><div class="progress-fill pink" style="width:52%"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px">DAO Treasury</span><span class="mono" style="color:var(--gold)">$2.1M</span></div>
+                <div class="progress-track"><div class="progress-fill gold" style="width:22%"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px">Supply Chain</span><span class="mono" style="color:var(--green)">$8.9M</span></div>
+                <div class="progress-track"><div class="progress-fill green" style="width:38%"></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Gas Tracker</span></div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px">🐢 Slow</span>
+                <span class="mono" style="color:var(--green)" id="gasLow">12 gwei</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px">🚶 Standard</span>
+                <span class="mono" style="color:var(--gold)" id="gasMed">18 gwei</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px">🚀 Fast</span>
+                <span class="mono" style="color:var(--red)" id="gasHigh">26 gwei</span>
+              </div>
+              <div style="margin-top:8px">
+                <div class="card-title" style="margin-bottom:6px">Network Load</div>
+                <div class="progress-track"><div class="progress-fill gold" id="networkLoad" style="width:64%"></div></div>
+                <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-top:4px">64% capacity</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════
+           PAGE: DEFI
+      ═══════════════════════════════════════════════ -->
+      <div class="page" id="page-defi">
+        <div class="section-title">DeFi Protocol <span class="badge">Ethereum Mainnet</span></div>
+
+        <div class="grid-4">
+          <div class="card stat-card card-glow-cyan">
+            <div class="stat-label">Your Deposits</div>
+            <span class="stat-value" id="depositVal">—</span>
+            <div class="stat-change up">APY: 8.4%</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">Borrowed</div>
+            <span class="stat-value green" id="borrowVal">—</span>
+            <div class="stat-change">Rate: 5.2%</div>
+          </div>
+          <div class="card stat-card card-glow-gold">
+            <div class="stat-label">Staked CVS</div>
+            <span class="stat-value gold" id="stakeVal">—</span>
+            <div class="stat-change up">Rewards: +2.1%</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">Health Factor</div>
+            <span class="stat-value" id="healthVal">—</span>
+            <div class="stat-change up">✓ Healthy</div>
+          </div>
+        </div>
+
+        <div class="grid-main">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <!-- LENDING -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Lending Markets</span>
+                <span class="tag active">8 Markets</span>
+              </div>
+              <table class="data-table">
+                <thead><tr><th>Asset</th><th>Total Supply</th><th>Supply APY</th><th>Borrow APY</th><th>Utilization</th><th>Action</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><span style="font-size:18px">⟠</span> <strong>ETH</strong></td>
+                    <td class="mono">$18.4M</td>
+                    <td class="mono" style="color:var(--green)">8.4%</td>
+                    <td class="mono" style="color:var(--red)">5.2%</td>
+                    <td>
+                      <div class="progress-track" style="width:80px">
+                        <div class="progress-fill cyan" style="width:72%"></div>
+                      </div>
+                      <div class="mono" style="font-size:9px;color:var(--muted)">72%</div>
+                    </td>
+                    <td><button class="btn btn-cyan btn-sm" onclick="handleDefi('supply','ETH')">Supply</button></td>
+                  </tr>
+                  <tr>
+                    <td><span style="font-size:18px">💵</span> <strong>USDC</strong></td>
+                    <td class="mono">$12.1M</td>
+                    <td class="mono" style="color:var(--green)">6.1%</td>
+                    <td class="mono" style="color:var(--red)">4.0%</td>
+                    <td>
+                      <div class="progress-track" style="width:80px">
+                        <div class="progress-fill cyan" style="width:58%"></div>
+                      </div>
+                      <div class="mono" style="font-size:9px;color:var(--muted)">58%</div>
+                    </td>
+                    <td><button class="btn btn-cyan btn-sm" onclick="handleDefi('supply','USDC')">Supply</button></td>
+                  </tr>
+                  <tr>
+                    <td><span style="font-size:18px">🔷</span> <strong>WBTC</strong></td>
+                    <td class="mono">$8.7M</td>
+                    <td class="mono" style="color:var(--green)">4.8%</td>
+                    <td class="mono" style="color:var(--red)">3.1%</td>
+                    <td>
+                      <div class="progress-track" style="width:80px">
+                        <div class="progress-fill cyan" style="width:44%"></div>
+                      </div>
+                      <div class="mono" style="font-size:9px;color:var(--muted)">44%</div>
+                    </td>
+                    <td><button class="btn btn-cyan btn-sm" onclick="handleDefi('supply','WBTC')">Supply</button></td>
+                  </tr>
+                  <tr>
+                    <td><span style="font-size:18px">🌿</span> <strong>LINK</strong></td>
+                    <td class="mono">$4.2M</td>
+                    <td class="mono" style="color:var(--green)">12.3%</td>
+                    <td class="mono" style="color:var(--red)">8.7%</td>
+                    <td>
+                      <div class="progress-track" style="width:80px">
+                        <div class="progress-fill pink" style="width:88%"></div>
+                      </div>
+                      <div class="mono" style="font-size:9px;color:var(--pink)">88% 🔥</div>
+                    </td>
+                    <td><button class="btn btn-cyan btn-sm" onclick="handleDefi('supply','LINK')">Supply</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- LIQUIDITY POOLS -->
+            <div class="card">
+              <div class="card-header"><span class="card-title">Liquidity Pools</span><span class="tag pending">AMM v3</span></div>
+              <div class="grid-2" style="margin-bottom:0">
+                <div style="background:rgba(0,240,200,0.05);border:1px solid var(--border);border-radius:10px;padding:14px">
+                  <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                    <span style="font-weight:600">ETH / USDC</span>
+                    <span class="tag active">Active</span>
+                  </div>
+                  <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:6px">TVL: $9.2M</div>
+                  <div style="font-family:var(--font-mono);font-size:13px;color:var(--green);margin-bottom:10px">APR: 24.8%</div>
+                  <button class="btn btn-cyan btn-sm btn-full" onclick="handleDefi('pool','ETH/USDC')">Add Liquidity</button>
+                </div>
+                <div style="background:rgba(240,0,110,0.04);border:1px solid var(--border);border-radius:10px;padding:14px">
+                  <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                    <span style="font-weight:600">CVS / ETH</span>
+                    <span class="tag active">Active</span>
+                  </div>
+                  <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:6px">TVL: $3.8M</div>
+                  <div style="font-family:var(--font-mono);font-size:13px;color:var(--green);margin-bottom:10px">APR: 48.2%</div>
+                  <button class="btn btn-pink btn-sm btn-full" onclick="handleDefi('pool','CVS/ETH')">Add Liquidity</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SIDE PANEL -->
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="card">
+              <div class="card-header"><span class="card-title">Quick Actions</span></div>
+              <div class="input-group">
+                <label class="input-label">Asset</label>
+                <select class="input-field" id="defiAsset">
+                  <option>ETH</option><option>USDC</option><option>WBTC</option><option>CVS</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label class="input-label">Amount</label>
+                <input class="input-field" type="number" placeholder="0.00" id="defiAmount">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <button class="btn btn-cyan btn-full" onclick="handleDefi('supply', document.getElementById('defiAsset').value)">Supply Asset</button>
+                <button class="btn btn-ghost btn-full" onclick="handleDefi('borrow', document.getElementById('defiAsset').value)">Borrow Asset</button>
+                <button class="btn btn-gold btn-full" onclick="handleDefi('stake', document.getElementById('defiAsset').value)">Stake CVS</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Yield Chart</span></div>
+              <canvas id="yieldChart" height="160"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════
+           PAGE: NFT
+      ═══════════════════════════════════════════════ -->
+      <div class="page" id="page-nft">
+        <div class="section-title">NFT Marketplace <span class="badge">ERC-721 & ERC-1155</span></div>
+        <div class="grid-4" style="margin-bottom:24px">
+          <div class="card stat-card card-glow-pink">
+            <div class="stat-label">Floor Price</div>
+            <span class="stat-value pink">0.84 ETH</span>
+            <div class="stat-change up">↑ +8.3%</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">24h Volume</div>
+            <span class="stat-value">142 ETH</span>
+            <div class="stat-change up">↑ +22%</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">Total Items</div>
+            <span class="stat-value green">14,829</span>
+            <div class="stat-change">100% on-chain</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">Royalties Paid</div>
+            <span class="stat-value gold">28.4 ETH</span>
+            <div class="stat-change">to creators</div>
+          </div>
+        </div>
+        <div class="grid-main">
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <span style="font-weight:600;font-size:14px">Featured Collection — ChainVerse Genesis</span>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-pink btn-sm" onclick="mintNFT()">✦ Mint NFT</button>
+                <button class="btn btn-ghost btn-sm">Filter</button>
+              </div>
+            </div>
+            <div class="nft-grid" id="nftGrid"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="card">
+              <div class="card-header"><span class="card-title">Mint NFT</span></div>
+              <div class="input-group">
+                <label class="input-label">Collection Name</label>
+                <input class="input-field" placeholder="My Genesis NFT" id="nftName">
+              </div>
+              <div class="input-group">
+                <label class="input-label">Royalty %</label>
+                <input class="input-field" type="number" placeholder="5" min="0" max="10" id="nftRoyalty">
+              </div>
+              <div class="input-group">
+                <label class="input-label">Rarity Tier</label>
+                <select class="input-field" id="nftRarity">
+                  <option>Common</option><option>Rare</option><option>Epic</option><option>Legendary</option>
+                </select>
+              </div>
+              <button class="btn btn-pink btn-full" onclick="mintNFT()">Mint to Ethereum ⟠</button>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Price History</span></div>
+              <canvas id="nftChart" height="150"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════
+           PAGE: DAO
+      ═══════════════════════════════════════════════ -->
+      <div class="page" id="page-dao">
+        <div class="section-title">DAO Governance <span class="badge">On-Chain Voting</span></div>
+        <div class="grid-4">
+          <div class="card stat-card card-glow-cyan">
+            <div class="stat-label">Treasury</div>
+            <span class="stat-value">$2.1M</span>
+            <div class="stat-change">CVS Tokens</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">Active Proposals</div>
+            <span class="stat-value green">3</span>
+            <div class="stat-change up">Voting open</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">Your Voting Power</div>
+            <span class="stat-value gold" id="daoVotePower">—</span>
+            <div class="stat-change">CVS tokens</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">Pass Rate</div>
+            <span class="stat-value">68%</span>
+            <div class="stat-change up">This epoch</div>
+          </div>
+        </div>
+        <div class="grid-main">
+          <div id="proposalContainer"></div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="card">
+              <div class="card-header"><span class="card-title">Submit Proposal</span></div>
+              <div class="input-group">
+                <label class="input-label">Title</label>
+                <input class="input-field" placeholder="Proposal title..." id="daoTitle">
+              </div>
+              <div class="input-group">
+                <label class="input-label">Category</label>
+                <select class="input-field" id="daoCat">
+                  <option>Treasury</option><option>Protocol</option><option>Grants</option><option>Governance</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label class="input-label">Description</label>
+                <textarea class="input-field" rows="3" placeholder="Describe your proposal..." id="daoDesc" style="resize:vertical"></textarea>
+              </div>
+              <button class="btn btn-cyan btn-full" onclick="submitProposal()">Submit On-Chain</button>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Vote Distribution</span></div>
+              <canvas id="daoChart" height="180"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════
+           PAGE: SUPPLY CHAIN
+      ═══════════════════════════════════════════════ -->
+      <div class="page" id="page-supply">
+        <div class="section-title">Supply Chain Tracking <span class="badge">Immutable Provenance</span></div>
+        <div class="grid-4">
+          <div class="card stat-card card-glow-cyan">
+            <div class="stat-label">Items Tracked</div>
+            <span class="stat-value">8,402</span>
+            <div class="stat-change up">On-chain verified</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">In Transit</div>
+            <span class="stat-value gold">1,284</span>
+            <div class="stat-change">Active shipments</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">Delivered</div>
+            <span class="stat-value green">6,840</span>
+            <div class="stat-change up">↑ 98.4% on-time</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-label">Disputes</div>
+            <span class="stat-value pink">18</span>
+            <div class="stat-change down">Under resolution</div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <span class="card-title">Live Shipment Tracker — #SHP-00482</span>
+            <span class="tag active"><span class="live-dot"></span>In Transit</span>
+          </div>
+          <div class="chain-steps">
+            <div class="chain-step">
+              <div class="chain-node">
+                <div class="chain-icon done">🏭</div>
+                <div class="chain-label">Manufacturing<br><span style="color:var(--green)">✓ Done</span></div>
+              </div>
+            </div>
+            <div class="chain-step"><div class="chain-connector done"></div></div>
+            <div class="chain-step">
+              <div class="chain-node">
+                <div class="chain-icon done">🧪</div>
+                <div class="chain-label">QA Check<br><span style="color:var(--green)">✓ Done</span></div>
+              </div>
+            </div>
+            <div class="chain-step"><div class="chain-connector done"></div></div>
+            <div class="chain-step">
+              <div class="chain-node">
+                <div class="chain-icon done">📦</div>
+                <div class="chain-label">Warehouse<br><span style="color:var(--green)">✓ Done</span></div>
+              </div>
+            </div>
+            <div class="chain-step"><div class="chain-connector done"></div></div>
+            <div class="chain-step">
+              <div class="chain-node">
+                <div class="chain-icon current">🚢</div>
+                <div class="chain-label">Shipping<br><span style="color:var(--cyan)">↻ Active</span></div>
+              </div>
+            </div>
+            <div class="chain-step"><div class="chain-connector pending"></div></div>
+            <div class="chain-step">
+              <div class="chain-node">
+                <div class="chain-icon pending">🛃</div>
+                <div class="chain-label">Customs<br><span style="color:var(--muted)">Pending</span></div>
+              </div>
+            </div>
+            <div class="chain-step"><div class="chain-connector pending"></div></div>
+            <div class="chain-step">
+              <div class="chain-node">
+                <div class="chain-icon pending">🚚</div>
+                <div class="chain-label">Last Mile<br><span style="color:var(--muted)">Pending</span></div>
+              </div>
+            </div>
+            <div class="chain-step"><div class="chain-connector pending"></div></div>
+            <div class="chain-step">
+              <div class="chain-node">
+                <div class="chain-icon pending">✅</div>
+                <div class="chain-label">Delivered<br><span style="color:var(--muted)">Pending</span></div>
+              </div>
+            </div>
+          </div>
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">
+            Blockchain TX: <span style="color:var(--cyan)">0x4f2c...8b9a</span> &nbsp;|&nbsp;
+            Last update: 2 min ago &nbsp;|&nbsp;
+            ETA: <span style="color:var(--gold)">Feb 24, 2026</span> &nbsp;|&nbsp;
+            Temperature: <span style="color:var(--green)">4°C ✓</span>
+          </div>
+        </div>
+        <div class="grid-main">
+          <div class="card">
+            <div class="card-header"><span class="card-title">All Shipments</span><button class="btn btn-cyan btn-sm" onclick="addShipment()">+ Register Item</button></div>
+            <table class="data-table">
+              <thead><tr><th>ID</th><th>Product</th><th>Origin</th><th>Destination</th><th>Status</th><th>Hash</th></tr></thead>
+              <tbody id="shipTable"></tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Register Item</span></div>
+            <div class="input-group"><label class="input-label">Product Name</label><input class="input-field" placeholder="e.g. iPhone 17 Pro" id="itemName"></div>
+            <div class="input-group"><label class="input-label">Origin</label><input class="input-field" placeholder="e.g. Shenzhen, CN" id="itemOrigin"></div>
+            <div class="input-group"><label class="input-label">Destination</label><input class="input-field" placeholder="e.g. New York, US" id="itemDest"></div>
+            <div class="input-group">
+              <label class="input-label">Category</label>
+              <select class="input-field" id="itemCat">
+                <option>Electronics</option><option>Pharmaceuticals</option><option>Food & Beverage</option><option>Luxury Goods</option><option>Industrial</option>
+              </select>
+            </div>
+            <button class="btn btn-cyan btn-full" onclick="addShipment()">Register on Blockchain</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════
+           PAGE: IDENTITY
+      ═══════════════════════════════════════════════ -->
+      <div class="page" id="page-identity">
+        <div class="section-title">Identity & Credentials <span class="badge">Self-Sovereign</span></div>
+        <div class="grid-main">
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <div id="idCardContainer">
+              <div style="color:var(--muted);font-style:italic;padding:40px;text-align:center;border:1px dashed var(--border);border-radius:14px">
+                Connect wallet to view your decentralized identity
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Verifiable Credentials</span><span class="tag active">ZK-Proof Enabled</span></div>
+              <table class="data-table">
+                <thead><tr><th>Credential</th><th>Issuer</th><th>Issued</th><th>Status</th><th>Proof</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td>🎓 University Degree</td>
+                    <td class="mono">MIT.edu</td>
+                    <td class="mono">2023-05-15</td>
+                    <td><span class="tag active">Valid</span></td>
+                    <td><button class="btn btn-ghost btn-sm" onclick="generateProof('Degree')">ZK Proof</button></td>
+                  </tr>
+                  <tr>
+                    <td>🪪 Government ID</td>
+                    <td class="mono">GOV.ETH</td>
+                    <td class="mono">2024-01-08</td>
+                    <td><span class="tag active">Valid</span></td>
+                    <td><button class="btn btn-ghost btn-sm" onclick="generateProof('Gov ID')">ZK Proof</button></td>
+                  </tr>
+                  <tr>
+                    <td>💼 Employment</td>
+                    <td class="mono">Chainverse.io</td>
+                    <td class="mono">2024-09-01</td>
+                    <td><span class="tag active">Valid</span></td>
+                    <td><button class="btn btn-ghost btn-sm" onclick="generateProof('Employment')">ZK Proof</button></td>
+                  </tr>
+                  <tr>
+                    <td>✅ KYC Verification</td>
+                    <td class="mono">Onfido.eth</td>
+                    <td class="mono">2024-11-20</td>
+                    <td><span class="tag active">Valid</span></td>
+                    <td><button class="btn btn-ghost btn-sm" onclick="generateProof('KYC')">ZK Proof</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="card">
+              <div class="card-header"><span class="card-title">Issue Credential</span></div>
+              <div class="input-group"><label class="input-label">Credential Type</label>
+                <select class="input-field" id="credType">
+                  <option>Academic</option><option>Professional</option><option>Government</option><option>Financial</option><option>Health</option>
+                </select>
+              </div>
+              <div class="input-group"><label class="input-label">Recipient Address</label><input class="input-field" placeholder="0x..." id="credAddr"></div>
+              <div class="input-group"><label class="input-label">Expiry Date</label><input class="input-field" type="date" id="credExpiry"></div>
+              <button class="btn btn-cyan btn-full" onclick="issueCredential()">Issue Credential</button>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Reputation Score</span></div>
+              <div style="text-align:center;padding:16px 0">
+                <div style="font-size:56px;font-weight:800;color:var(--cyan);text-shadow:0 0 30px rgba(0,240,200,0.5)" id="repScore">—</div>
+                <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px">On-Chain Reputation</div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span>Transaction History</span><span class="mono" style="color:var(--green)">Excellent</span></div>
+                  <div class="progress-track"><div class="progress-fill cyan" style="width:92%"></div></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span>DAO Participation</span><span class="mono" style="color:var(--cyan)">Active</span></div>
+                  <div class="progress-track"><div class="progress-fill cyan" style="width:74%"></div></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px"><span>Loan Repayment</span><span class="mono" style="color:var(--green)">Perfect</span></div>
+                  <div class="progress-track"><div class="progress-fill green" style="width:100%"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════
+           PAGE: AI ASSISTANT
+      ═══════════════════════════════════════════════ -->
+      <div class="page" id="page-ai">
+        <div class="section-title">AI Web3 Assistant <span class="badge">Claude-Powered</span></div>
+        <div class="grid-main">
+          <div class="card" style="display:flex;flex-direction:column">
+            <div class="card-header">
+              <span class="card-title">ChainVerse AI — Ask anything about Web3</span>
+              <div style="display:flex;gap:6px">
+                <span class="tag active"><span class="live-dot"></span>Online</span>
+              </div>
+            </div>
+            <div class="ai-chat">
+              <div class="ai-messages" id="aiMessages">
+                <div class="ai-msg bot">
+                  <div class="ai-avatar bot">🤖</div>
+                  <div class="ai-bubble">Hello! I'm your ChainVerse AI assistant. I can help you with DeFi strategies, NFT valuations, DAO voting analysis, supply chain queries, and smart contract explanations. What would you like to know?</div>
+                </div>
+              </div>
+              <div class="ai-input-row">
+                <input class="ai-input" id="aiInput" placeholder="Ask about DeFi yields, NFT trends, DAO proposals..." onkeydown="if(event.key==='Enter')sendAI()">
+                <button class="ai-send" onclick="sendAI()">▶</button>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="card">
+              <div class="card-header"><span class="card-title">AI Insights</span></div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="background:rgba(0,240,200,0.06);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer" onclick="quickAsk('What is the best DeFi yield strategy right now?')">
+                  <div style="font-size:12px;font-weight:600;margin-bottom:4px">💡 Yield Strategy</div>
+                  <div style="font-size:11px;color:var(--muted)">Click to analyze optimal yield opportunities</div>
+                </div>
+                <div style="background:rgba(240,0,110,0.06);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer" onclick="quickAsk('Which NFT collections are trending this week?')">
+                  <div style="font-size:12px;font-weight:600;margin-bottom:4px">🎨 NFT Trends</div>
+                  <div style="font-size:11px;color:var(--muted)">Discover trending collections</div>
+                </div>
+                <div style="background:rgba(240,184,0,0.05);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer" onclick="quickAsk('Summarize all active DAO proposals and give voting recommendations')">
+                  <div style="font-size:12px;font-weight:600;margin-bottom:4px">🗳️ DAO Analysis</div>
+                  <div style="font-size:11px;color:var(--muted)">AI-powered voting recommendations</div>
+                </div>
+                <div style="background:rgba(0,232,122,0.05);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer" onclick="quickAsk('Explain how supply chain provenance works on blockchain')">
+                  <div style="font-size:12px;font-weight:600;margin-bottom:4px">📦 Supply Chain</div>
+                  <div style="font-size:11px;color:var(--muted)">Blockchain provenance explained</div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Market Sentiment</span></div>
+              <canvas id="sentimentChart" height="140"></canvas>
+              <div style="display:flex;justify-content:center;gap:16px;margin-top:10px;font-family:var(--font-mono);font-size:10px">
+                <span style="color:var(--green)">● Bullish 62%</span>
+                <span style="color:var(--muted)">● Neutral 24%</span>
+                <span style="color:var(--red)">● Bearish 14%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// PARTICLE BACKGROUND
+// ═══════════════════════════════════════════════════════════════════
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+for (let i = 0; i < 80; i++) {
+  particles.push({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: (Math.random() - 0.5) * 0.3,
+    r: Math.random() * 1.5 + 0.5,
+    alpha: Math.random() * 0.5 + 0.1,
+    color: Math.random() > 0.5 ? '0,240,200' : '0,200,240',
+  });
+}
+
+function animParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = canvas.width;
+    if (p.x > canvas.width) p.x = 0;
+    if (p.y < 0) p.y = canvas.height;
+    if (p.y > canvas.height) p.y = 0;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(${p.color},${p.alpha})`;
+    ctx.fill();
+  });
+  // Connect nearby particles
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i+1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      if (dist < 120) {
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.strokeStyle = `rgba(0,240,200,${0.05*(1-dist/120)})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(animParticles);
+}
+animParticles();
+
+// ═══════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════
+let connected = false;
+let walletAddr = '';
+let userDeposits = 0, userBorrowed = 0, userStaked = 0;
+
+const nftEmojis = ['🐉','⚡','🌊','🔥','🌌','💎','🦅','🌸','⚔️','🌙','🦊','🎭'];
+const nftColors = [
+  ['#0b1a2e','#00f0c8'],['#1a0b2e','#f0006e'],['#0b2e1a','#00e87a'],
+  ['#2e1a0b','#f0b800'],['#1a2e0b','#00c8f0'],['#2e0b1a','#ff4455'],
+];
+
+let nfts = [
+  { id: 1, name: 'Genesis Dragon', emoji: '🐉', price: '2.4 ETH', rarity: 'Legendary', creator: '0x4a9c...f83b', colors: nftColors[0] },
+  { id: 2, name: 'Storm Circuit', emoji: '⚡', price: '0.84 ETH', rarity: 'Rare', creator: '0x71ae...209d', colors: nftColors[1] },
+  { id: 3, name: 'Deep Ocean', emoji: '🌊', price: '1.2 ETH', rarity: 'Epic', creator: '0x83fe...c41a', colors: nftColors[2] },
+  { id: 4, name: 'Ember Void', emoji: '🔥', price: '0.52 ETH', rarity: 'Common', creator: '0x29bc...7d5e', colors: nftColors[3] },
+  { id: 5, name: 'Nebula Fox', emoji: '🌌', price: '1.8 ETH', rarity: 'Epic', creator: '0xaa12...8801', colors: nftColors[4] },
+  { id: 6, name: 'Crystal Hawk', emoji: '🦅', price: '3.1 ETH', rarity: 'Legendary', creator: '0xbb44...2299', colors: nftColors[5] },
+];
+
+const proposals = [
+  { id: 'CVP-014', title: 'Allocate 500K CVS to Ecosystem Fund', category: 'Treasury', status: 'active', for: 712000, against: 189000, abstain: 44000, days: 3 },
+  { id: 'CVP-013', title: 'Reduce Min Proposal Threshold to 1,000 CVS', category: 'Governance', status: 'active', for: 498000, against: 302000, abstain: 28000, days: 5 },
+  { id: 'CVP-012', title: 'Deploy ChainVerse on Arbitrum L2', category: 'Protocol', status: 'active', for: 920000, against: 48000, abstain: 32000, days: 1 },
+  { id: 'CVP-011', title: 'Q4 Developer Grants Program', category: 'Grants', status: 'passed', for: 840000, against: 92000, abstain: 68000, days: 0 },
+];
+
+const shipments = [
+  { id: '#SHP-00482', product: 'iPhone 17 Pro Batch', origin: 'Shenzhen, CN', dest: 'New York, US', status: 'active', hash: '0x4f2c...8b9a' },
+  { id: '#SHP-00481', product: 'Organic Coffee Beans', origin: 'São Paulo, BR', dest: 'London, UK', status: 'done', hash: '0x9a1d...f22c' },
+  { id: '#SHP-00480', product: 'Pharma Vaccines', origin: 'Bangalore, IN', dest: 'Lagos, NG', status: 'done', hash: '0xb82e...3310' },
+  { id: '#SHP-00479', product: 'Tesla Battery Cells', origin: 'Nevada, US', dest: 'Berlin, DE', status: 'pending', hash: '0xc44a...7f81' },
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════════
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// WALLET
+// ═══════════════════════════════════════════════════════════════════
+function connectWallet() {
+  if (connected) return;
+  connected = true;
+  walletAddr = '0x' + [...Array(8)].map(()=>'0123456789abcdef'[Math.floor(Math.random()*16)]).join('') + '...';
+  userDeposits = +(Math.random()*4+0.5).toFixed(2);
+  userBorrowed = +(Math.random()*1+0.1).toFixed(2);
+  userStaked = Math.floor(Math.random()*40000+5000);
+
+  document.getElementById('connectBtn').textContent = walletAddr;
+  document.getElementById('connectBtn').classList.add('connected');
+  document.getElementById('walletDot').classList.add('connected');
+  document.getElementById('depositVal').textContent = userDeposits + ' ETH';
+  document.getElementById('borrowVal').textContent = userBorrowed + ' ETH';
+  document.getElementById('stakeVal').textContent = userStaked.toLocaleString() + ' CVS';
+  document.getElementById('healthVal').textContent = (userDeposits / userBorrowed * 2.4).toFixed(2);
+  document.getElementById('daoVotePower').textContent = userStaked.toLocaleString() + ' CVS';
+  document.getElementById('repScore').textContent = Math.floor(Math.random()*100+800);
+
+  // Identity card
+  document.getElementById('idCardContainer').innerHTML = `
+    <div class="id-card">
+      <div class="id-avatar">🧑‍💻</div>
+      <div class="id-name">Anonymous User</div>
+      <div class="id-addr">${walletAddr}</div>
+      <div class="id-creds">
+        <div class="credential"><span class="check">✓</span> KYC Verified</div>
+        <div class="credential"><span class="check">✓</span> Accredited Investor</div>
+        <div class="credential"><span class="check">✓</span> DAO Member</div>
+        <div class="credential"><span class="check">✓</span> Supply Partner</div>
+      </div>
+    </div>`;
+  showToast('✓ Wallet connected — ' + walletAddr);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════════
+function showToast(msg, duration=3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DEFI ACTIONS
+// ═══════════════════════════════════════════════════════════════════
+function handleDefi(action, asset) {
+  if (!connected) { showToast('⚠️ Please connect your wallet first'); return; }
+  const amount = document.getElementById('defiAmount').value || '0.5';
+  const msgs = {
+    supply: `✅ Supplying ${amount} ${asset} at 8.4% APY`,
+    borrow: `✅ Borrowing ${amount} ${asset} at 5.2% rate`,
+    borrow: `✅ Borrowing ${amount} ${asset} at 5.2% rate`,
+    pool: `✅ Adding liquidity to ${asset} pool`,
+    stake: `✅ Staking ${amount} ${asset} — rewards active`,
+  };
+  showToast(msgs[action] || '✅ Transaction submitted');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// NFT
+// ═══════════════════════════════════════════════════════════════════
+function renderNFTs() {
+  const grid = document.getElementById('nftGrid');
+  grid.innerHTML = nfts.map(n => {
+    const rarityClass = n.rarity === 'Legendary' || n.rarity === 'Epic' ? 'rare' : (n.rarity === 'Rare' ? 'passed' : 'ended');
+    return `
+      <div class="nft-card" onclick="showToast('🎨 ${n.name} — Listed at ${n.price}')">
+        <div class="nft-art" style="background:linear-gradient(135deg, ${n.colors[0]}, ${n.colors[1]}20)">
+          <span style="filter:drop-shadow(0 0 12px ${n.colors[1]})">${n.emoji}</span>
+        </div>
+        <div class="nft-info">
+          <div class="nft-name">${n.name}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span class="tag ${rarityClass}">${n.rarity}</span>
+            <span class="nft-price">${n.price}</span>
+          </div>
+          <div class="nft-creator">by ${n.creator}</div>
+          <button class="btn btn-pink btn-sm btn-full" style="margin-top:8px" onclick="event.stopPropagation();buyNFT('${n.name}','${n.price}')">Buy Now</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function mintNFT() {
+  if (!connected) { showToast('⚠️ Please connect wallet first'); return; }
+  const name = document.getElementById('nftName').value || 'Unnamed NFT';
+  const rarity = document.getElementById('nftRarity').value;
+  const royalty = document.getElementById('nftRoyalty').value || '5';
+  const newNFT = {
+    id: nfts.length+1,
+    name, emoji: nftEmojis[Math.floor(Math.random()*nftEmojis.length)],
+    price: (Math.random()*2+0.1).toFixed(2) + ' ETH',
+    rarity, creator: walletAddr,
+    colors: nftColors[Math.floor(Math.random()*nftColors.length)],
+  };
+  nfts.unshift(newNFT);
+  renderNFTs();
+  document.getElementById('nftName').value = '';
+  showToast(`✅ "${name}" minted! Royalty: ${royalty}% — Gas saved via L2`);
+}
+
+function buyNFT(name, price) {
+  if (!connected) { showToast('⚠️ Connect wallet to purchase'); return; }
+  showToast(`🎨 Purchasing "${name}" for ${price}... TX submitted`);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DAO
+// ═══════════════════════════════════════════════════════════════════
+function renderProposals() {
+  const c = document.getElementById('proposalContainer');
+  c.innerHTML = '<div class="card-title" style="margin-bottom:16px;font-family:var(--font-mono);font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted)">Active & Recent Proposals</div>' +
+  proposals.map(p => {
+    const total = p.for + p.against + p.abstain;
+    const pct = total ? Math.round(p.for/total*100) : 0;
+    const badgeClass = p.status === 'active' ? 'active' : p.status === 'passed' ? 'passed' : 'failed';
+    return `
+      <div class="card" style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div>
+            <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-bottom:4px">${p.id} · ${p.category} ${p.status==='active'?`· ⏳ ${p.days}d left`:''}</div>
+            <div style="font-size:14px;font-weight:600">${p.title}</div>
+          </div>
+          <span class="tag ${badgeClass}">${p.status}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-bottom:4px">
+          <span>FOR ${p.for.toLocaleString()}</span>
+          <span style="color:var(--cyan)">${pct}%</span>
+          <span>AGAINST ${p.against.toLocaleString()}</span>
+        </div>
+        <div class="progress-track" style="margin-bottom:12px">
+          <div class="progress-fill cyan" style="width:${pct}%"></div>
+        </div>
+        ${p.status==='active' ? `
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-cyan btn-sm" style="flex:1" onclick="castVote('${p.id}','for')">✓ For</button>
+            <button class="btn btn-pink btn-sm" style="flex:1" onclick="castVote('${p.id}','against')">✗ Against</button>
+            <button class="btn btn-ghost btn-sm" style="flex:1" onclick="castVote('${p.id}','abstain')">◌ Abstain</button>
+          </div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function castVote(id, choice) {
+  if (!connected) { showToast('⚠️ Connect wallet to vote'); return; }
+  const p = proposals.find(x => x.id === id);
+  if (!p) return;
+  p[choice] += userStaked;
+  renderProposals();
+  showToast(`🗳️ Voted ${choice.toUpperCase()} on ${id} with ${userStaked.toLocaleString()} CVS`);
+}
+
+function submitProposal() {
+  if (!connected) { showToast('⚠️ Connect wallet to submit'); return; }
+  const title = document.getElementById('daoTitle').value;
+  if (!title) { showToast('⚠️ Please enter a proposal title'); return; }
+  const cat = document.getElementById('daoCat').value;
+  const newId = 'CVP-0' + (proposals.length + 12);
+  proposals.unshift({ id: newId, title, category: cat, status: 'active', for: 0, against: 0, abstain: 0, days: 7 });
+  renderProposals();
+  document.getElementById('daoTitle').value = '';
+  document.getElementById('daoDesc').value = '';
+  showToast(`✅ ${newId} submitted to on-chain governance`);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SUPPLY CHAIN
+// ═══════════════════════════════════════════════════════════════════
+function renderShipments() {
+  const tb = document.getElementById('shipTable');
+  tb.innerHTML = shipments.map(s => `
+    <tr>
+      <td class="mono">${s.id}</td>
+      <td style="font-weight:500">${s.product}</td>
+      <td class="mono" style="font-size:11px">${s.origin}</td>
+      <td class="mono" style="font-size:11px">${s.dest}</td>
+      <td><span class="tag ${s.status==='active'?'active':s.status==='done'?'passed':'pending'}">${s.status==='done'?'Delivered':s.status==='active'?'In Transit':'Pending'}</span></td>
+      <td class="mono" style="color:var(--cyan);font-size:10px">${s.hash}</td>
+    </tr>`).join('');
+}
+
+function addShipment() {
+  if (!connected) { showToast('⚠️ Connect wallet to register'); return; }
+  const product = document.getElementById('itemName').value || 'New Product';
+  const origin = document.getElementById('itemOrigin').value || 'Origin';
+  const dest = document.getElementById('itemDest').value || 'Destination';
+  const hash = '0x' + [...Array(4)].map(()=>Math.random().toString(16).slice(2,6)).join('') + '...';
+  shipments.unshift({ id: '#SHP-0' + (483+shipments.length), product, origin, dest, status: 'pending', hash });
+  renderShipments();
+  document.getElementById('itemName').value = '';
+  document.getElementById('itemOrigin').value = '';
+  document.getElementById('itemDest').value = '';
+  showToast(`✅ Item "${product}" registered on blockchain — ${hash}`);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// IDENTITY
+// ═══════════════════════════════════════════════════════════════════
+function generateProof(type) {
+  showToast(`🔐 Zero-Knowledge Proof generated for "${type}" — Privacy preserved`);
+}
+function issueCredential() {
+  const type = document.getElementById('credType').value;
+  const addr = document.getElementById('credAddr').value || '0x...';
+  showToast(`✅ "${type}" credential issued to ${addr}`);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TRANSACTION TABLE
+// ═══════════════════════════════════════════════════════════════════
+function renderTxTable() {
+  const types = ['Supply ETH','Borrow USDC','Mint NFT','Vote Cast','Register Item','Stake CVS'];
+  const amounts = ['0.5 ETH','1,200 USDC','1 NFT','50K CVS','1 Item','2,500 CVS'];
+  const tbl = document.getElementById('txTable');
+  tbl.innerHTML = types.map((t,i)=>`
+    <tr>
+      <td style="font-size:12px">${t}</td>
+      <td class="mono" style="font-size:11px">${amounts[i]}</td>
+      <td><span class="tag ${Math.random()>0.2?'active':'pending'}">${Math.random()>0.2?'Confirmed':'Pending'}</span></td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// AI ASSISTANT
+// ═══════════════════════════════════════════════════════════════════
+const aiResponses = {
+  'yield': 'Based on current on-chain data, the top yield opportunities are: (1) ETH/USDC liquidity pool at 24.8% APR with low impermanent loss risk, (2) LINK lending at 12.3% APY due to high utilization, (3) CVS staking rewards at 18.5% APY for governance participants.',
+  'nft': 'Trending this week: ChainVerse Genesis collections with Legendary NFTs seeing 2.4 ETH floors (+38%). Digital art NFTs with on-chain metadata are outperforming. Watch for the upcoming Music NFT drop — AI-generated audio tied to on-chain events.',
+  'dao': 'Active proposals analysis: CVP-012 (Arbitrum L2 Deploy) is near passing at 95% FOR — strong technical consensus. CVP-014 (Ecosystem Fund) shows healthy debate at 79% FOR. Recommend voting FOR on both based on long-term protocol growth metrics.',
+  'supply': 'Blockchain supply chain provenance works by recording each custody transfer as an immutable transaction. Smart contracts trigger automatic payments and alerts at each checkpoint. QR codes link physical items to their on-chain history — enabling instant verification without trusting any central database.',
+  'defi': 'DeFi (Decentralized Finance) eliminates traditional financial intermediaries using smart contracts on Ethereum. ChainVerse supports lending, borrowing, staking, and liquidity pools — all permissionless and non-custodial.',
+  'default': 'Great question! ChainVerse integrates DeFi lending, NFT marketplace, DAO governance, supply chain tracking, and decentralized identity into one unified Ethereum protocol. Each module interacts — your NFT collateral can back DeFi loans, DAO votes govern protocol parameters, and identity credentials enable undercollateralized lending.',
+};
+
+function sendAI() {
+  const input = document.getElementById('aiInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  addAIMsg(msg, 'user');
+  input.value = '';
+  setTimeout(() => {
+    const lower = msg.toLowerCase();
+    let response = aiResponses.default;
+    if (lower.includes('yield') || lower.includes('apy') || lower.includes('apr')) response = aiResponses.yield;
+    else if (lower.includes('nft') || lower.includes('collection') || lower.includes('mint')) response = aiResponses.nft;
+    else if (lower.includes('dao') || lower.includes('proposal') || lower.includes('vote')) response = aiResponses.dao;
+    else if (lower.includes('supply') || lower.includes('chain') || lower.includes('provenance')) response = aiResponses.supply;
+    else if (lower.includes('defi') || lower.includes('lending') || lower.includes('borrow')) response = aiResponses.defi;
+    addAIMsg(response, 'bot');
+  }, 600);
+}
+
+function quickAsk(question) {
+  showPage('ai');
+  document.getElementById('aiInput').value = question;
+  setTimeout(sendAI, 100);
+}
+
+function addAIMsg(text, role) {
+  const msgs = document.getElementById('aiMessages');
+  const div = document.createElement('div');
+  div.className = `ai-msg ${role}`;
+  div.innerHTML = `
+    <div class="ai-avatar ${role}">${role==='bot'?'🤖':'👤'}</div>
+    <div class="ai-bubble">${text}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════════════════════════════════════
+function makeLineChart(id, labels, datasets, height) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const ctx2 = canvas.getContext('2d');
+  const W = canvas.parentElement.clientWidth || 600;
+  const H = height || 200;
+  canvas.width = W; canvas.height = H;
+
+  const allVals = datasets.flatMap(d=>d.data);
+  const min = Math.min(...allVals) * 0.95;
+  const max = Math.max(...allVals) * 1.05;
+  const range = max - min || 1;
+
+  const padL=40, padR=20, padT=20, padB=30;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+
+  ctx2.clearRect(0,0,W,H);
+
+  // Grid
+  for (let i=0;i<=4;i++) {
+    const y = padT + (chartH * i/4);
+    ctx2.beginPath();
+    ctx2.moveTo(padL, y); ctx2.lineTo(W-padR, y);
+    ctx2.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx2.stroke();
+    const val = max - range*(i/4);
+    ctx2.fillStyle = 'rgba(90,106,138,0.8)';
+    ctx2.font = '9px JetBrains Mono, monospace';
+    ctx2.fillText(val>=1000?(val/1000).toFixed(0)+'K':val.toFixed(0), 0, y+3);
+  }
+
+  datasets.forEach(ds => {
+    const pts = ds.data.map((v,i)=>({
+      x: padL + (i/(labels.length-1))*chartW,
+      y: padT + (1-(v-min)/range)*chartH,
+    }));
+    // Gradient fill
+    const grad = ctx2.createLinearGradient(0, padT, 0, H);
+    grad.addColorStop(0, ds.color.replace(')',',0.25)').replace('rgb','rgba'));
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx2.beginPath();
+    ctx2.moveTo(pts[0].x, H-padB);
+    pts.forEach(p=>ctx2.lineTo(p.x,p.y));
+    ctx2.lineTo(pts[pts.length-1].x, H-padB);
+    ctx2.closePath();
+    ctx2.fillStyle = grad;
+    ctx2.fill();
+    // Line
+    ctx2.beginPath();
+    pts.forEach((p,i)=>i===0?ctx2.moveTo(p.x,p.y):ctx2.lineTo(p.x,p.y));
+    ctx2.strokeStyle = ds.color;
+    ctx2.lineWidth = 2;
+    ctx2.shadowColor = ds.color;
+    ctx2.shadowBlur = 6;
+    ctx2.stroke();
+    ctx2.shadowBlur = 0;
+    // Dots
+    pts.forEach(p=>{
+      ctx2.beginPath();
+      ctx2.arc(p.x,p.y,2.5,0,Math.PI*2);
+      ctx2.fillStyle = ds.color;
+      ctx2.fill();
+    });
+  });
+
+  // X labels
+  labels.forEach((l,i)=>{
+    if (i%Math.ceil(labels.length/6)===0) {
+      const x = padL + (i/(labels.length-1))*chartW;
+      ctx2.fillStyle = 'rgba(90,106,138,0.8)';
+      ctx2.font = '8px JetBrains Mono, monospace';
+      ctx2.fillText(l, x-8, H-padB+14);
+    }
+  });
+}
+
+function makeDonutChart(id) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const ctx2 = canvas.getContext('2d');
+  const S = 200;
+  canvas.width = S; canvas.height = S;
+  const cx=S/2,cy=S/2,r=70,inner=45;
+  const slices = [
+    {val:38,color:'#00f0c8',label:'DeFi'},
+    {val:25,color:'#f0006e',label:'NFT'},
+    {val:22,color:'#f0b800',label:'Supply'},
+    {val:15,color:'#00e87a',label:'DAO'},
+  ];
+  const total = slices.reduce((a,b)=>a+b.val,0);
+  let angle = -Math.PI/2;
+  slices.forEach(s=>{
+    const a = (s.val/total)*Math.PI*2;
+    ctx2.beginPath();
+    ctx2.moveTo(cx,cy);
+    ctx2.arc(cx,cy,r,angle,angle+a);
+    ctx2.closePath();
+    ctx2.fillStyle = s.color+'99';
+    ctx2.fill();
+    ctx2.beginPath();
+    ctx2.arc(cx,cy,inner,0,Math.PI*2);
+    ctx2.fillStyle = '#0b0f1a';
+    ctx2.fill();
+    const mid = angle + a/2;
+    ctx2.fillStyle = s.color;
+    ctx2.font = 'bold 9px JetBrains Mono, monospace';
+    ctx2.fillText(s.label, cx+Math.cos(mid)*(r+14)-18, cy+Math.sin(mid)*(r+14)+4);
+    angle += a;
+  });
+  ctx2.fillStyle='rgba(255,255,255,0.7)';
+  ctx2.font='bold 14px Syne,sans-serif';
+  ctx2.fillText('TVL',cx-12,cy+5);
+}
+
+function makeSentimentChart(id) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const ctx2 = canvas.getContext('2d');
+  const W = canvas.parentElement.clientWidth || 300;
+  canvas.width = W; canvas.height = 140;
+  const days = ['M','T','W','T','F','S','S'];
+  const bull = [55,60,58,65,68,62,72];
+  const bear = [25,20,22,15,12,18,14];
+  makeLineChart(id, days, [
+    {data:bull,color:'rgb(0,232,122)'},
+    {data:bear,color:'rgb(255,68,85)'},
+  ], 140);
+}
+
+function generateVolumeData() {
+  const labels = [];
+  const data = [];
+  const base = 1000000;
+  for (let i=30;i>=0;i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    labels.push(d.getDate()+'');
+    data.push(Math.floor(base + Math.random()*800000 + i*15000));
+  }
+  return {labels,data};
+}
+
+function makeYieldChart(id) {
+  const labels = ['ETH','USDC','WBTC','LINK','CVS'];
+  const data = [8.4,6.1,4.8,12.3,18.5];
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const ctx2 = canvas.getContext('2d');
+  const W = canvas.parentElement.clientWidth || 280;
+  canvas.width = W; canvas.height = 160;
+  ctx2.clearRect(0,0,W,160);
+  const barW = (W-60)/(labels.length)-8;
+  labels.forEach((l,i)=>{
+    const x = 40 + i*(barW+8);
+    const h = (data[i]/20)*110;
+    const y = 130-h;
+    const grad = ctx2.createLinearGradient(0,y,0,130);
+    grad.addColorStop(0,'rgba(0,240,200,0.9)');
+    grad.addColorStop(1,'rgba(0,240,200,0.1)');
+    ctx2.fillStyle = grad;
+    ctx2.fillRect(x,y,barW,h);
+    ctx2.shadowColor='#00f0c8';ctx2.shadowBlur=8;
+    ctx2.fillRect(x,y,barW,3);ctx2.shadowBlur=0;
+    ctx2.fillStyle='rgba(90,106,138,0.9)';
+    ctx2.font='8px JetBrains Mono';
+    ctx2.fillText(l,x+barW/2-6,148);
+    ctx2.fillStyle='#00f0c8';
+    ctx2.font='bold 9px JetBrains Mono';
+    ctx2.fillText(data[i]+'%',x+barW/2-10,y-4);
+  });
+}
+
+// DAO chart
+function makeDAOChart(id) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const ctx2 = canvas.getContext('2d');
+  const W = canvas.parentElement.clientWidth || 280;
+  canvas.width = W; canvas.height = 180;
+  const labels = ['Week 1','Week 2','Week 3','Week 4'];
+  const forData = [420000,580000,490000,712000];
+  const againstData = [180000,220000,290000,189000];
+  makeLineChart(id, labels, [
+    {data:forData,color:'rgb(0,232,122)'},
+    {data:againstData,color:'rgb(255,68,85)'},
+  ], 180);
+}
+
+// NFT chart
+function makeNFTChart(id) {
+  const labels = ['Jan','Feb','Mar','Apr','May','Jun'];
+  const data = [0.3,0.45,0.52,0.71,0.78,0.84];
+  makeLineChart(id, labels, [{data,color:'rgb(240,0,110)'}], 150);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// LIVE UPDATES
+// ═══════════════════════════════════════════════════════════════════
+function updateLiveStats() {
+  const eth = 3200 + Math.floor(Math.random()*100-50);
+  document.getElementById('ethPrice').textContent = '$'+eth.toLocaleString();
+  const tvl = (48 + (Math.random()-0.5)*2).toFixed(1);
+  document.getElementById('tvlVal').textContent = '$'+tvl+'M';
+  document.getElementById('tvlStat').textContent = '$'+tvl+'M';
+  const gasLow = 10+Math.floor(Math.random()*6);
+  document.getElementById('gasLow').textContent = gasLow+' gwei';
+  document.getElementById('gasMed').textContent = (gasLow+6)+' gwei';
+  document.getElementById('gasHigh').textContent = (gasLow+14)+' gwei';
+  const load = 55+Math.floor(Math.random()*25);
+  document.getElementById('networkLoad').style.width = load+'%';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  renderNFTs();
+  renderProposals();
+  renderShipments();
+  renderTxTable();
+
+  setTimeout(() => {
+    const {labels, data} = generateVolumeData();
+    makeLineChart('volumeChart', labels, [{data,color:'rgb(0,240,200)'}]);
+    makeDonutChart('donutChart');
+    makeYieldChart('yieldChart');
+    makeDAOChart('daoChart');
+    makeNFTChart('nftChart');
+    makeSentimentChart('sentimentChart');
+  }, 200);
+
+  setInterval(updateLiveStats, 3000);
+  setInterval(() => {
+    const {labels, data} = generateVolumeData();
+    if (document.getElementById('page-overview').classList.contains('active')) {
+      makeLineChart('volumeChart', labels, [{data,color:'rgb(0,240,200)'}]);
+    }
+  }, 8000);
+});
+</script>
+</body>
+</html>
